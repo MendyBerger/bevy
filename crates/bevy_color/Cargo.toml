@@ -16,8 +16,12 @@ bevy_reflect = { path = "../bevy_reflect", version = "0.14.0-dev", features = [
 bytemuck = "1"
 serde = "1.0"
 thiserror = "1.0"
-wgpu = { version = "0.19.3", default-features = false }
+# wgpu = { version = "0.19.3", default-features = false }
+wgpu = { path = "../../../wgpu/wgpu", default-features = false, features = ["wasi"]}
 encase = { version = "0.7", default-features = false }
 
 [lints]
 workspace = true
+
+[patch.crates-io]
+wgpu = { path = "../../../wgpu/wgpu", default-features = false, features = ["wasi"]}

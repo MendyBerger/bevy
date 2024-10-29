@@ -10,9 +10,9 @@ keywords = ["bevy"]
 
 [features]
 trace = []
-wayland = ["winit/wayland", "winit/wayland-csd-adwaita"]
-x11 = ["winit/x11"]
-accesskit_unix = ["accesskit_winit/accesskit_unix", "accesskit_winit/async-io"]
+# wayland = ["winit/wayland", "winit/wayland-csd-adwaita"]
+# x11 = ["winit/x11"]
+# accesskit_unix = ["accesskit_winit/accesskit_unix", "accesskit_winit/async-io"]
 
 [dependencies]
 # bevy
@@ -29,22 +29,28 @@ bevy_tasks = { path = "../bevy_tasks", version = "0.14.0-dev" }
 
 # other
 # feature rwh_06 refers to window_raw_handle@v0.6
-winit = { version = "0.29", default-features = false, features = ["rwh_06"] }
-accesskit_winit = { version = "0.17", default-features = false, features = [
-  "rwh_06",
-] }
+# winit = { version = "0.29", default-features = false, features = ["rwh_06"] }
+# accesskit_winit = { version = "0.17", default-features = false, features = [
+#   "rwh_06",
+# ] }
 approx = { version = "0.5", default-features = false }
-raw-window-handle = "0.6"
+# raw-window-handle = "0.6"
+raw-window-handle = { git = "https://github.com/wasi-gfx/raw-window-handle.git", rev = "c14d47c8e5ea1ef9f776da481d8c4ee7e41f9832" }
+wgpu = { path = "../../../wgpu/wgpu", default-features = false, features = ["wasi", "wgsl", "naga", "naga-ir", "fragile-send-sync-non-atomic-wasm"]}
 
-[target.'cfg(target_os = "android")'.dependencies]
-winit = { version = "0.29", default-features = false, features = [
-  "android-native-activity",
-  "rwh_06",
-] }
+wit-bindgen = "0.34"
+log = "0.4"
+wasi = "=0.13.1"
 
-[target.'cfg(target_arch = "wasm32")'.dependencies]
-wasm-bindgen = { version = "0.2" }
-web-sys = "0.3"
+# [target.'cfg(target_os = "android")'.dependencies]
+# winit = { version = "0.29", default-features = false, features = [
+#   "android-native-activity",
+#   "rwh_06",
+# ] }
+
+# [target.'cfg(target_arch = "wasm32")'.dependencies]
+# wasm-bindgen = { version = "0.2" }
+# web-sys = "0.3"
 
 crossbeam-channel = "0.5"
 

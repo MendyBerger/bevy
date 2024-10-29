@@ -297,27 +297,30 @@ struct BloomTexture {
 }
 
 impl BloomTexture {
-    #[cfg(any(
-        not(feature = "webgl"),
-        not(target_arch = "wasm32"),
-        feature = "webgpu"
-    ))]
+    // #[cfg(any(
+    //     not(feature = "webgl"),
+    //     not(target_arch = "wasm32"),
+    //     feature = "webgpu"
+    // ))]
+    // fn view(&self, base_mip_level: u32) -> TextureView {
+    //     self.texture.texture.create_view(&TextureViewDescriptor {
+    //         base_mip_level,
+    //         mip_level_count: Some(1u32),
+    //         ..Default::default()
+    //     })
+    // }
+    // #[cfg(all(feature = "webgl", target_arch = "wasm32", not(feature = "webgpu")))]
+    // fn view(&self, base_mip_level: u32) -> TextureView {
+    //     self.texture[base_mip_level as usize]
+    //         .texture
+    //         .create_view(&TextureViewDescriptor {
+    //             base_mip_level: 0,
+    //             mip_level_count: Some(1u32),
+    //             ..Default::default()
+    //         })
+    // }
     fn view(&self, base_mip_level: u32) -> TextureView {
-        self.texture.texture.create_view(&TextureViewDescriptor {
-            base_mip_level,
-            mip_level_count: Some(1u32),
-            ..Default::default()
-        })
-    }
-    #[cfg(all(feature = "webgl", target_arch = "wasm32", not(feature = "webgpu")))]
-    fn view(&self, base_mip_level: u32) -> TextureView {
-        self.texture[base_mip_level as usize]
-            .texture
-            .create_view(&TextureViewDescriptor {
-                base_mip_level: 0,
-                mip_level_count: Some(1u32),
-                ..Default::default()
-            })
+        todo!()
     }
 }
 

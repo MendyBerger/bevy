@@ -3,7 +3,8 @@
 //! cores)
 
 use bevy_tasks::TaskPoolBuilder;
-use web_time::{Duration, Instant};
+// use web_time::{Duration, Instant};
+use std::time::{Duration, Instant};
 
 fn main() {
     let pool = TaskPoolBuilder::new()

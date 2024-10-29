@@ -6,10 +6,10 @@ use crate::{
 use bevy_ecs::event::{Events, ManualEventReader};
 use bevy_utils::{Duration, Instant};
 
-#[cfg(target_arch = "wasm32")]
-use std::{cell::RefCell, rc::Rc};
-#[cfg(target_arch = "wasm32")]
-use wasm_bindgen::{prelude::*, JsCast};
+// #[cfg(target_arch = "wasm32", )]
+// use std::{cell::RefCell, rc::Rc};
+// #[cfg(target_arch = "wasm32")]
+// use wasm_bindgen::{prelude::*, JsCast};
 
 /// Determines the method used to run an [`App`]'s [`Schedule`](bevy_ecs::schedule::Schedule).
 ///
@@ -75,7 +75,7 @@ impl Plugin for ScheduleRunnerPlugin {
             let plugins_state = app.plugins_state();
             if plugins_state != PluginsState::Cleaned {
                 while app.plugins_state() == PluginsState::Adding {
-                    #[cfg(not(target_arch = "wasm32"))]
+                    // #[cfg(not(target_arch = "wasm32"))]
                     bevy_tasks::tick_global_task_pools_on_main_thread();
                 }
                 app.finish();
@@ -114,45 +114,45 @@ impl Plugin for ScheduleRunnerPlugin {
                         Ok(None)
                     };
 
-                    #[cfg(not(target_arch = "wasm32"))]
-                    {
+                    // #[cfg(not(target_arch = "wasm32"))]
+                    // {
                         while let Ok(delay) = tick(&mut app, wait) {
                             if let Some(delay) = delay {
                                 std::thread::sleep(delay);
                             }
                         }
-                    }
+                    // }
 
-                    #[cfg(target_arch = "wasm32")]
-                    {
-                        fn set_timeout(f: &Closure<dyn FnMut()>, dur: Duration) {
-                            web_sys::window()
-                                .unwrap()
-                                .set_timeout_with_callback_and_timeout_and_arguments_0(
-                                    f.as_ref().unchecked_ref(),
-                                    dur.as_millis() as i32,
-                                )
-                                .expect("Should register `setTimeout`.");
-                        }
-                        let asap = Duration::from_millis(1);
+                    // #[cfg(target_arch = "wasm32")]
+                    // {
+                    //     fn set_timeout(f: &Closure<dyn FnMut()>, dur: Duration) {
+                    //         web_sys::window()
+                    //             .unwrap()
+                    //             .set_timeout_with_callback_and_timeout_and_arguments_0(
+                    //                 f.as_ref().unchecked_ref(),
+                    //                 dur.as_millis() as i32,
+                    //             )
+                    //             .expect("Should register `setTimeout`.");
+                    //     }
+                    //     let asap = Duration::from_millis(1);
 
-                        let mut rc = Rc::new(app);
-                        let f = Rc::new(RefCell::new(None));
-                        let g = f.clone();
+                    //     let mut rc = Rc::new(app);
+                    //     let f = Rc::new(RefCell::new(None));
+                    //     let g = f.clone();
 
-                        let c = move || {
-                            let mut app = Rc::get_mut(&mut rc).unwrap();
-                            let delay = tick(&mut app, wait);
-                            match delay {
-                                Ok(delay) => {
-                                    set_timeout(f.borrow().as_ref().unwrap(), delay.unwrap_or(asap))
-                                }
-                                Err(_) => {}
-                            }
-                        };
-                        *g.borrow_mut() = Some(Closure::wrap(Box::new(c) as Box<dyn FnMut()>));
-                        set_timeout(g.borrow().as_ref().unwrap(), asap);
-                    };
+                    //     let c = move || {
+                    //         let mut app = Rc::get_mut(&mut rc).unwrap();
+                    //         let delay = tick(&mut app, wait);
+                    //         match delay {
+                    //             Ok(delay) => {
+                    //                 set_timeout(f.borrow().as_ref().unwrap(), delay.unwrap_or(asap))
+                    //             }
+                    //             Err(_) => {}
+                    //         }
+                    //     };
+                    //     *g.borrow_mut() = Some(Closure::wrap(Box::new(c) as Box<dyn FnMut()>));
+                    //     set_timeout(g.borrow().as_ref().unwrap(), asap);
+                    // };
                 }
             }
         });

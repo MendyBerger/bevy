@@ -321,6 +321,8 @@ bevy_debug_stepping = ["bevy_internal/bevy_debug_stepping"]
 [dependencies]
 bevy_dylib = { path = "crates/bevy_dylib", version = "0.14.0-dev", default-features = false, optional = true }
 bevy_internal = { path = "crates/bevy_internal", version = "0.14.0-dev", default-features = false }
+log = "0.4.22"
+wasi = "=0.13.1"
 
 [dev-dependencies]
 rand = "0.8.0"
@@ -1667,6 +1669,9 @@ description = "An implementation of the classic game \"Breakout\""
 category = "Games"
 wasm = true
 
+# [package.metadata.example.breakout.lib]
+# crate-type = ["cdylib"]
+
 [[example]]
 name = "contributors"
 path = "examples/games/contributors.rs"
@@ -2693,3 +2698,6 @@ panic = "abort"
 
 [package.metadata.docs.rs]
 cargo-args = ["-Zunstable-options", "-Zrustdoc-scrape-examples"]
+
+[patch.crates-io]
+getrandom = { path = "../for-bevy/getrandom" }

@@ -29,8 +29,8 @@ use std::marker::PhantomData;
 use std::ops::Range;
 use std::path::{Path, PathBuf};
 
-#[cfg(not(target_arch = "wasm32"))]
-#[cfg(not(target_arch = "wasm32"))]
+// #[cfg(not(target_arch = "wasm32"))]
+// #[cfg(not(target_arch = "wasm32"))]
 use bevy_tasks::tick_global_task_pools_on_main_thread;
 
 /// Registration of default types to the [`TypeRegistry`](bevy_reflect::TypeRegistry) resource.
@@ -125,7 +125,7 @@ impl Plugin for TaskPoolPlugin {
         // Setup the default bevy task pools
         self.task_pool_options.create_default_pools();
 
-        #[cfg(not(target_arch = "wasm32"))]
+        // #[cfg(not(target_arch = "wasm32"))]
         _app.add_systems(Last, tick_global_task_pools);
     }
 }
@@ -136,7 +136,7 @@ pub struct NonSendMarker(PhantomData<*mut ()>);
 ///
 /// Calls [`tick_global_task_pools_on_main_thread`],
 /// and uses [`NonSendMarker`] to ensure that this system runs on the main thread
-#[cfg(not(target_arch = "wasm32"))]
+// #[cfg(not(target_arch = "wasm32"))]
 fn tick_global_task_pools(_main_thread_marker: Option<NonSend<NonSendMarker>>) {
     tick_global_task_pools_on_main_thread();
 }

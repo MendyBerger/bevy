@@ -121,7 +121,7 @@ impl PluginGroup for DefaultPlugins {
 
         #[cfg(feature = "bevy_gilrs")]
         {
-            group = group.add(bevy_gilrs::GilrsPlugin);
+            // group = group.add(bevy_gilrs::GilrsPlugin);
         }
 
         #[cfg(feature = "bevy_animation")]

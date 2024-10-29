@@ -26,9 +26,11 @@ pub mod prelude {
 use bevy_app::{prelude::*, RunFixedMainLoop};
 use bevy_ecs::event::{signal_event_update_system, EventUpdateSignal, EventUpdates};
 use bevy_ecs::prelude::*;
-use bevy_utils::{tracing::warn, Duration, Instant};
+use bevy_utils::{tracing::warn, Duration};
 pub use crossbeam_channel::TrySendError;
 use crossbeam_channel::{Receiver, Sender};
+
+type Instant = u64;
 
 /// Adds time functionality to Apps.
 #[derive(Default)]
@@ -133,10 +135,12 @@ fn time_system(
             if *has_received_time {
                 warn!("time_system did not receive the time from the render world! Calculations depending on the time may be incorrect.");
             }
-            Instant::now()
+            // Instant::now()
+            wasi::clocks::monotonic_clock::now()
         }
     } else {
-        Instant::now()
+        // Instant::now()
+        wasi::clocks::monotonic_clock::now()
     };
 
     match update_strategy.as_ref() {

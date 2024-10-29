@@ -36,7 +36,8 @@ pub use petgraph;
 pub use smallvec;
 pub use thiserror;
 pub use tracing;
-pub use web_time::{Duration, Instant, SystemTime, SystemTimeError, TryFromFloatSecsError};
+// pub use web_time::{Duration, Instant, SystemTime, SystemTimeError, TryFromFloatSecsError};
+pub use std::time::{Duration, Instant, SystemTime, SystemTimeError, TryFromFloatSecsError};
 
 #[allow(missing_docs)]
 pub mod nonmax {

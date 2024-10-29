@@ -142,12 +142,12 @@ impl TaskPool {
     where
         T: 'static,
     {
-        #[cfg(target_arch = "wasm32")]
-        wasm_bindgen_futures::spawn_local(async move {
-            future.await;
-        });
+        // #[cfg(target_arch = "wasm32")]
+        // wasm_bindgen_futures::spawn_local(async move {
+        //     future.await;
+        // });
 
-        #[cfg(not(target_arch = "wasm32"))]
+        // #[cfg(not(target_arch = "wasm32"))]
         {
             LOCAL_EXECUTOR.with(|executor| {
                 let _task = executor.spawn(future);

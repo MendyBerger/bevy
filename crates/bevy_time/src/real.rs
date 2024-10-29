@@ -1,5 +1,7 @@
 use bevy_reflect::Reflect;
-use bevy_utils::{Duration, Instant};
+use bevy_utils::Duration;
+
+type Instant = u64;
 
 use crate::time::Time;
 
@@ -38,7 +40,8 @@ pub struct Real {
 impl Default for Real {
     fn default() -> Self {
         Self {
-            startup: Instant::now(),
+            // startup: Instant::now(),
+            startup: wasi::clocks::monotonic_clock::now(),
             first_update: None,
             last_update: None,
         }
@@ -61,7 +64,8 @@ impl Time<Real> {
     /// inaccurate timekeeping, as the [`Time`] resource is ordinarily managed
     /// by the [`TimePlugin`](crate::TimePlugin).
     pub fn update(&mut self) {
-        let instant = Instant::now();
+        // let instant = Instant::now();
+        let instant = wasi::clocks::monotonic_clock::now();
         self.update_with_instant(instant);
     }
 
@@ -74,7 +78,7 @@ impl Time<Real> {
     /// by the [`TimePlugin`](crate::TimePlugin).
     pub fn update_with_duration(&mut self, duration: Duration) {
         let last_update = self.context().last_update.unwrap_or(self.context().startup);
-        self.update_with_instant(last_update + duration);
+        self.update_with_instant(last_update + duration.as_nanos() as u64);
     }
 
     /// Updates time with a specified [`Instant`].
@@ -91,7 +95,7 @@ impl Time<Real> {
             return;
         };
         let delta = instant - last_update;
-        self.advance_by(delta);
+        self.advance_by(Duration::from_nanos(delta));
         self.context_mut().last_update = Some(instant);
     }
 

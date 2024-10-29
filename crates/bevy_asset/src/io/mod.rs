@@ -8,13 +8,14 @@ compile_error!(
 #[cfg(target_os = "android")]
 pub mod android;
 pub mod embedded;
-#[cfg(not(target_arch = "wasm32"))]
-pub mod file;
+// #[cfg(not(target_arch = "wasm32"))]
+// pub mod file;
 pub mod gated;
 pub mod memory;
 pub mod processor_gated;
-#[cfg(target_arch = "wasm32")]
-pub mod wasm;
+// #[cfg(target_arch = "wasm32")]
+// pub mod wasm;
+pub mod wasi;
 
 mod source;
 

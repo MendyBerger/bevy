@@ -431,12 +431,13 @@ impl AssetSource {
     /// the asset root.
     pub fn get_default_reader(_path: String) -> impl FnMut() -> Box<dyn AssetReader> + Send + Sync {
         move || {
-            #[cfg(all(not(target_arch = "wasm32"), not(target_os = "android")))]
-            return Box::new(super::file::FileAssetReader::new(&_path));
-            #[cfg(target_arch = "wasm32")]
-            return Box::new(super::wasm::HttpWasmAssetReader::new(&_path));
-            #[cfg(target_os = "android")]
-            return Box::new(super::android::AndroidAssetReader);
+            // #[cfg(all(not(target_arch = "wasm32"), not(target_os = "android")))]
+            return Box::new(super::wasi::WasiAssetReader::new());
+            // #[cfg(target_arch = "wasm32")]
+            // return Box::new(super::wasm::HttpWasmAssetReader::new(&_path));
+            // #[cfg(target_os = "android")]
+            // return Box::new(super::android::AndroidAssetReader);
+            // todo!()
         }
     }
 
