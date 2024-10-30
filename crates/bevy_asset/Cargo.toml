@@ -38,6 +38,7 @@ parking_lot = { version = "0.12", features = ["arc_lock", "send_guard"] }
 ron = "0.8"
 serde = { version = "1", features = ["derive"] }
 thiserror = "1.0"
+log = "0.4"
 
 [target.'cfg(target_os = "android")'.dependencies]
 bevy_winit = { path = "../bevy_winit", version = "0.14.0-dev" }

@@ -31,7 +31,7 @@ impl AssetReader for WasiAssetReader {
             // let path = self.root_path.join(path);
             // self.fetch_bytes(path).await
             // todo!()
-            let g = Box::new(WASI_HTTP_PREFIX.as_bytes()) as Box<(dyn futures_io::AsyncRead + std::marker::Send + Sync + Unpin)>;
+            let g = Box::new(&WASI_HTTP_PREFIX[..]) as Box<(dyn futures_io::AsyncRead + std::marker::Send + Sync + Unpin)>;
             Ok(g)
         })
     }
@@ -45,7 +45,7 @@ impl AssetReader for WasiAssetReader {
             // let meta_path = get_meta_path(&self.root_path.join(path));
             // Ok(self.fetch_bytes(meta_path).await?)
             // todo!()
-            let g = Box::new(WASI_HTTP_PREFIX.as_bytes()) as Box<(dyn futures_io::AsyncRead + std::marker::Send + Sync + Unpin)>;
+            let g = Box::new(&WASI_HTTP_PREFIX[..]) as Box<(dyn futures_io::AsyncRead + std::marker::Send + Sync + Unpin)>;
             Ok(g)
         })
     }

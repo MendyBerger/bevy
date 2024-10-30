@@ -5,17 +5,19 @@
 //! The app's [runner](bevy_app::App::runner) is set by `WinitPlugin` and handles the `winit` [`EventLoop`].
 //! See `winit_runner` for details.
 
-pub mod accessibility;
+// pub mod accessibility;
 mod converters;
 mod system;
 mod winit_config;
 mod winit_windows;
+mod winit;
 
 use approx::relative_eq;
 use bevy_a11y::AccessibilityRequested;
 use bevy_utils::{Duration, Instant};
 use system::{changed_windows, create_windows, despawn_windows, CachedWindow};
-use winit::dpi::{LogicalSize, PhysicalSize};
+// use crate::winit::dpi::{LogicalSize, PhysicalSize};
+use crate::winit::dpi::PhysicalSize;
 pub use winit_config::*;
 pub use winit_windows::*;
 
@@ -28,7 +30,7 @@ use bevy_input::{
     touchpad::{TouchpadMagnify, TouchpadRotate},
 };
 use bevy_math::{ivec2, DVec2, Vec2};
-#[cfg(not(target_arch = "wasm32"))]
+// #[cfg(not(target_arch = "wasm32"))]
 use bevy_tasks::tick_global_task_pools_on_main_thread;
 use bevy_utils::tracing::{error, trace, warn};
 use bevy_window::{
@@ -44,14 +46,16 @@ use bevy_window::{PrimaryWindow, RawHandleWrapper};
 #[cfg(target_os = "android")]
 pub use winit::platform::android::activity as android_activity;
 
-use winit::{
-    event::{self, DeviceEvent, Event, WindowEvent},
-    event_loop::{ControlFlow, EventLoop, EventLoopBuilder, EventLoopWindowTarget},
+use crate::winit::{
+    // event::{self, DeviceEvent, Event, WindowEvent},
+    // event_loop::{ControlFlow, EventLoop, EventLoopBuilder, EventLoopWindowTarget},
+    event::{self, Event, WindowEvent},
+    event_loop::{EventLoop, EventLoopWindowTarget},
 };
 
-use crate::accessibility::{AccessKitAdapters, AccessKitPlugin, WinitActionHandlers};
+// use crate::accessibility::{AccessKitAdapters, AccessKitPlugin, WinitActionHandlers};
 
-use crate::converters::convert_winit_theme;
+// use crate::converters::convert_winit_theme;
 
 /// [`AndroidApp`] provides an interface to query the application state as well as monitor events
 /// (for example lifecycle and input events).
@@ -81,39 +85,39 @@ pub struct WinitPlugin {
 
 impl Plugin for WinitPlugin {
     fn build(&self, app: &mut App) {
-        let mut event_loop_builder = EventLoopBuilder::<()>::with_user_event();
+        // let mut event_loop_builder = EventLoopBuilder::<()>::with_user_event();
 
-        // linux check is needed because x11 might be enabled on other platforms.
-        #[cfg(all(target_os = "linux", feature = "x11"))]
-        {
-            use winit::platform::x11::EventLoopBuilderExtX11;
+        // // linux check is needed because x11 might be enabled on other platforms.
+        // #[cfg(all(target_os = "linux", feature = "x11"))]
+        // {
+        //     use winit::platform::x11::EventLoopBuilderExtX11;
 
-            // This allows a Bevy app to be started and ran outside of the main thread.
-            // A use case for this is to allow external applications to spawn a thread
-            // which runs a Bevy app without requiring the Bevy app to need to reside on
-            // the main thread, which can be problematic.
-            event_loop_builder.with_any_thread(self.run_on_any_thread);
-        }
+        //     // This allows a Bevy app to be started and ran outside of the main thread.
+        //     // A use case for this is to allow external applications to spawn a thread
+        //     // which runs a Bevy app without requiring the Bevy app to need to reside on
+        //     // the main thread, which can be problematic.
+        //     event_loop_builder.with_any_thread(self.run_on_any_thread);
+        // }
 
-        // linux check is needed because wayland might be enabled on other platforms.
-        #[cfg(all(target_os = "linux", feature = "wayland"))]
-        {
-            use winit::platform::wayland::EventLoopBuilderExtWayland;
-            event_loop_builder.with_any_thread(self.run_on_any_thread);
-        }
+        // // linux check is needed because wayland might be enabled on other platforms.
+        // #[cfg(all(target_os = "linux", feature = "wayland"))]
+        // {
+        //     use winit::platform::wayland::EventLoopBuilderExtWayland;
+        //     event_loop_builder.with_any_thread(self.run_on_any_thread);
+        // }
 
-        #[cfg(target_os = "windows")]
-        {
-            use winit::platform::windows::EventLoopBuilderExtWindows;
-            event_loop_builder.with_any_thread(self.run_on_any_thread);
-        }
+        // #[cfg(target_os = "windows")]
+        // {
+        //     use winit::platform::windows::EventLoopBuilderExtWindows;
+        //     event_loop_builder.with_any_thread(self.run_on_any_thread);
+        // }
 
-        #[cfg(target_os = "android")]
-        {
-            use winit::platform::android::EventLoopBuilderExtAndroid;
-            let msg = "Bevy must be setup with the #[bevy_main] macro on Android";
-            event_loop_builder.with_android_app(ANDROID_APP.get().expect(msg).clone());
-        }
+        // #[cfg(target_os = "android")]
+        // {
+        //     use winit::platform::android::EventLoopBuilderExtAndroid;
+        //     let msg = "Bevy must be setup with the #[bevy_main] macro on Android";
+        //     event_loop_builder.with_android_app(ANDROID_APP.get().expect(msg).clone());
+        // }
 
         app.init_non_send_resource::<WinitWindows>()
             .init_resource::<WinitSettings>()
@@ -129,27 +133,29 @@ impl Plugin for WinitPlugin {
                     .chain(),
             );
 
-        app.add_plugins(AccessKitPlugin);
+        // app.add_plugins(AccessKitPlugin);
 
-        let event_loop = event_loop_builder
-            .build()
-            .expect("Failed to build event loop");
+        // let event_loop = event_loop_builder
+        //     .build()
+        //     .expect("Failed to build event loop");
 
-        // iOS, macOS, and Android don't like it if you create windows before the event loop is
-        // initialized.
-        //
-        // See:
-        // - https://github.com/rust-windowing/winit/blob/master/README.md#macos
-        // - https://github.com/rust-windowing/winit/blob/master/README.md#ios
-        #[cfg(not(any(target_os = "android", target_os = "ios", target_os = "macos")))]
-        {
-            // Otherwise, we want to create a window before `bevy_render` initializes the renderer
-            // so that we have a surface to use as a hint. This improves compatibility with `wgpu`
-            // backends, especially WASM/WebGL2.
-            let mut create_window = SystemState::<CreateWindowParams>::from_world(&mut app.world);
-            create_windows(&event_loop, create_window.get_mut(&mut app.world));
-            create_window.apply(&mut app.world);
-        }
+        // // iOS, macOS, and Android don't like it if you create windows before the event loop is
+        // // initialized.
+        // //
+        // // See:
+        // // - https://github.com/rust-windowing/winit/blob/master/README.md#macos
+        // // - https://github.com/rust-windowing/winit/blob/master/README.md#ios
+        // #[cfg(not(any(target_os = "android", target_os = "ios", target_os = "macos")))]
+        // {
+        //     // Otherwise, we want to create a window before `bevy_render` initializes the renderer
+        //     // so that we have a surface to use as a hint. This improves compatibility with `wgpu`
+        //     // backends, especially WASM/WebGL2.
+        //     let mut create_window = SystemState::<CreateWindowParams>::from_world(&mut app.world);
+        //     create_windows(&event_loop, create_window.get_mut(&mut app.world));
+        //     create_window.apply(&mut app.world);
+        // }
+
+        let event_loop = EventLoop::<()>::new().unwrap();
 
         // `winit`'s windows are bound to the event loop that created them, so the event loop must
         // be inserted as a resource here to pass it onto the runner.
@@ -180,7 +186,8 @@ struct WinitAppRunnerState {
     /// Is `true` if enough time has elapsed since `last_update` to run another update.
     wait_elapsed: bool,
     /// The time the last update started.
-    last_update: Instant,
+    // last_update: Instant,
+    last_update: u64,
     /// The time the next update is scheduled to start.
     scheduled_update: Option<Instant>,
     /// Number of "forced" updates to trigger on application start
@@ -222,7 +229,8 @@ impl Default for WinitAppRunnerState {
             device_event_received: false,
             redraw_requested: false,
             wait_elapsed: false,
-            last_update: Instant::now(),
+            // last_update: Instant::now(),
+            last_update: wasi::clocks::monotonic_clock::now(),
             scheduled_update: None,
             // 3 seems to be enough, 5 is a safe margin
             startup_forced_updates: 5,
@@ -235,8 +243,8 @@ type CreateWindowParams<'w, 's, F = ()> = (
     Query<'w, 's, (Entity, &'static mut Window), F>,
     EventWriter<'w, WindowCreated>,
     NonSendMut<'w, WinitWindows>,
-    NonSendMut<'w, AccessKitAdapters>,
-    ResMut<'w, WinitActionHandlers>,
+    // NonSendMut<'w, AccessKitAdapters>,
+    // ResMut<'w, WinitActionHandlers>,
     Res<'w, AccessibilityRequested>,
 );
 
@@ -271,7 +279,8 @@ pub fn winit_runner(mut app: App) {
         EventWriter<WindowResized>,
         NonSend<WinitWindows>,
         Query<(&mut Window, &mut CachedWindow)>,
-        NonSend<AccessKitAdapters>,
+        // NonSend<AccessKitAdapters>,
+        NonSend<()>,
     )> = SystemState::new(&mut app.world);
 
     let mut create_window =
@@ -295,6 +304,7 @@ pub fn winit_runner(mut app: App) {
     // TODO(clean): the winit docs mention using `spawn` instead of `run` on WASM.
     if let Err(err) = event_loop.run(event_handler) {
         error!("winit event loop returned an error: {err}");
+        todo!()
     }
 }
 
@@ -308,11 +318,12 @@ fn handle_winit_event(
         EventWriter<WindowResized>,
         NonSend<WinitWindows>,
         Query<(&mut Window, &mut CachedWindow)>,
-        NonSend<AccessKitAdapters>,
+        // NonSend<AccessKitAdapters>,
+        NonSend<()>,
     )>,
     focused_windows_state: &mut SystemState<(Res<WinitSettings>, Query<&Window>)>,
     redraw_event_reader: &mut ManualEventReader<RequestRedraw>,
-    event: Event<()>,
+    event: Event,
     event_loop: &EventLoopWindowTarget<()>,
 ) {
     #[cfg(feature = "trace")]
@@ -320,7 +331,7 @@ fn handle_winit_event(
 
     if app.plugins_state() != PluginsState::Cleaned {
         if app.plugins_state() != PluginsState::Ready {
-            #[cfg(not(target_arch = "wasm32"))]
+            // #[cfg(not(target_arch = "wasm32"))]
             tick_global_task_pools_on_main_thread();
         } else {
             app.finish();
