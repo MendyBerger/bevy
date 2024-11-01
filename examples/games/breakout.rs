@@ -90,21 +90,13 @@ struct MyCliRunner;
 
 impl wasi::exports::cli::run::Guest for MyCliRunner {
     fn run() -> Result<(), ()> {
-
-
-        let s = format!("me message");
-        let stdout = wasi::cli::stdout::get_stdout();
-        stdout.blocking_write_and_flush(s.as_bytes()).unwrap();
-
-
-
         std::panic::set_hook(Box::new(|info: _| {
             let s = format!("panic message: {info}");
             let stdout = wasi::cli::stdout::get_stdout();
             stdout.blocking_write_and_flush(s.as_bytes()).unwrap();
         }));
 
-        WasiLogger::init();
+        // WasiLogger::init();
         ::log::info!("before main");
 
         // log::info!("\nchoose example\n1: simple graph\n2: squeeze\n3: mnist\n");
