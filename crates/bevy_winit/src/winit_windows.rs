@@ -252,6 +252,8 @@ impl WinitWindows {
         self.entity_to_winit.insert(entity, winit_window.id());
         self.winit_to_entity.insert(winit_window.id(), entity);
 
+        log::info!(":::::::::::: creating window ::::::::::::");
+
         self.windows
             .entry(winit_window.id())
             .insert(winit_window)
@@ -269,8 +271,8 @@ impl WinitWindows {
     ///
     /// This is mostly just an intermediary step between us and winit.
     pub fn get_window_entity(&self, winit_id: crate::winit::window::WindowId) -> Option<Entity> {
-        // self.winit_to_entity.get(&winit_id).cloned()
-        todo!()
+        self.winit_to_entity.get(&winit_id).cloned()
+        // todo!()
     }
 
     /// Remove a window from winit.
@@ -279,8 +281,8 @@ impl WinitWindows {
     pub fn remove_window(&mut self, entity: Entity) -> Option<crate::winit::window::Window> {
         let winit_id = self.entity_to_winit.remove(&entity)?;
         // Don't remove from `winit_to_window_id` so we know the window used to exist.
-        // self.windows.remove(&winit_id)
-        todo!()
+        self.windows.remove(&winit_id)
+        // todo!()
     }
 }
 

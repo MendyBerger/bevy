@@ -138,24 +138,23 @@ impl Plugin for WinitPlugin {
         // let event_loop = event_loop_builder
         //     .build()
         //     .expect("Failed to build event loop");
-
-        // // iOS, macOS, and Android don't like it if you create windows before the event loop is
-        // // initialized.
-        // //
-        // // See:
-        // // - https://github.com/rust-windowing/winit/blob/master/README.md#macos
-        // // - https://github.com/rust-windowing/winit/blob/master/README.md#ios
-        // #[cfg(not(any(target_os = "android", target_os = "ios", target_os = "macos")))]
-        // {
-        //     // Otherwise, we want to create a window before `bevy_render` initializes the renderer
-        //     // so that we have a surface to use as a hint. This improves compatibility with `wgpu`
-        //     // backends, especially WASM/WebGL2.
-        //     let mut create_window = SystemState::<CreateWindowParams>::from_world(&mut app.world);
-        //     create_windows(&event_loop, create_window.get_mut(&mut app.world));
-        //     create_window.apply(&mut app.world);
-        // }
-
         let event_loop = EventLoop::<()>::new().unwrap();
+
+        // iOS, macOS, and Android don't like it if you create windows before the event loop is
+        // initialized.
+        //
+        // See:
+        // - https://github.com/rust-windowing/winit/blob/master/README.md#macos
+        // - https://github.com/rust-windowing/winit/blob/master/README.md#ios
+        #[cfg(not(any(target_os = "android", target_os = "ios", target_os = "macos")))]
+        {
+            // Otherwise, we want to create a window before `bevy_render` initializes the renderer
+            // so that we have a surface to use as a hint. This improves compatibility with `wgpu`
+            // backends, especially WASM/WebGL2.
+            let mut create_window = SystemState::<CreateWindowParams>::from_world(&mut app.world);
+            create_windows(&event_loop, create_window.get_mut(&mut app.world));
+            create_window.apply(&mut app.world);
+        }
 
         // `winit`'s windows are bound to the event loop that created them, so the event loop must
         // be inserted as a resource here to pass it onto the runner.
@@ -203,7 +202,7 @@ impl WinitAppRunnerState {
     }
 }
 
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Debug)]
 enum ActiveState {
     NotYetStarted,
     Active,
@@ -281,7 +280,7 @@ pub fn winit_runner(mut app: App) {
         NonSend<WinitWindows>,
         Query<(&mut Window, &mut CachedWindow)>,
         // NonSend<AccessKitAdapters>,
-        NonSend<()>,
+        // NonSend<()>,
     )> = SystemState::new(&mut app.world);
 
     let mut create_window =
@@ -320,7 +319,7 @@ fn handle_winit_event(
         NonSend<WinitWindows>,
         Query<(&mut Window, &mut CachedWindow)>,
         // NonSend<AccessKitAdapters>,
-        NonSend<()>,
+        // NonSend<()>,
     )>,
     focused_windows_state: &mut SystemState<(Res<WinitSettings>, Query<&Window>)>,
     redraw_event_reader: &mut ManualEventReader<RequestRedraw>,
@@ -417,13 +416,19 @@ fn handle_winit_event(
         Event::WindowEvent {
             event, window_id, ..
         } => {
-            // let (mut window_resized, winit_windows, mut windows, access_kit_adapters) =
-            //     event_writer_system_state.get_mut(&mut app.world);
+            // runner_state.active = ActiveState::Active;
 
-            // let Some(window) = winit_windows.get_window_entity(window_id) else {
-            //     warn!("Skipped event {event:?} for unknown winit Window Id {window_id:?}");
-            //     return;
-            // };
+            // println!("-----------: {:#?}", event_writer_system_state);
+            // let (mut window_resized, winit_windows, mut windows, access_kit_adapters) =
+            let (mut window_resized, winit_windows, mut windows) =
+                event_writer_system_state.get_mut(&mut app.world);
+
+            // log::info!("winit_windows: {:#?}", winit_windows);
+            let Some(window) = winit_windows.get_window_entity(window_id) else {
+                // warn!("Skipped event {event:?} for unknown winit Window Id {window_id:?}");
+                log::info!("Skipped event {event:?} for unknown winit Window Id {window_id:?}");
+                return;
+            };
 
             // let Ok((mut win, _)) = windows.get_mut(window) else {
             //     warn!("Window {window:?} is missing `Window` component, skipping event {event:?}");
@@ -453,6 +458,39 @@ fn handle_winit_event(
                     //     }
                     // }
                     // app.send_event(converters::convert_keyboard_input(event, window));
+                    // let state = event.state.is_pressed();
+
+                    let key_code = match event.physical_key {
+                        winit::keyboard::PhysicalKey::Code(crate::winit::keyboard::KeyCode::ArrowLeft) => Some(bevy_input::keyboard::KeyCode::ArrowLeft),
+                        winit::keyboard::PhysicalKey::Code(crate::winit::keyboard::KeyCode::ArrowRight) => Some(bevy_input::keyboard::KeyCode::ArrowRight),
+                        _ => None,
+                    };
+                    let logical_key = match event.physical_key {
+                        winit::keyboard::PhysicalKey::Code(crate::winit::keyboard::KeyCode::ArrowLeft) => Some(bevy_input::keyboard::Key::ArrowLeft),
+                        winit::keyboard::PhysicalKey::Code(crate::winit::keyboard::KeyCode::ArrowRight) => Some(bevy_input::keyboard::Key::ArrowRight),
+                        _ => None,
+                    };
+                    let state = match event.state {
+                        event::ElementState::Pressed => bevy_input::ButtonState::Pressed,
+                        event::ElementState::Released => bevy_input::ButtonState::Released,
+                    };
+
+                    if let (Some(key_code), Some(logical_key)) = (key_code, logical_key) {
+                        let output = bevy_input::keyboard::KeyboardInput {
+                            key_code,
+                            logical_key,
+                            state,
+                            window,
+                        };
+                        log::info!("sending event {:?}", output);
+                        // app.send_event(bevy_input::keyboard::KeyboardInput {
+                        //     key_code: bevy_input::keyboard::KeyCode::ArrowRight,
+                        //     logical_key: bevy_input::keyboard::Key::ArrowRight,
+                        //     state: bevy_input::ButtonState::Released,
+                        //     window,
+                        // });
+                        app.send_event(output);
+                    }
                 }
                 // WindowEvent::CursorMoved { position, .. } => {
                 //     let physical_position = DVec2::new(position.x, position.y);
@@ -651,59 +689,59 @@ fn handle_winit_event(
         //     // before actually suspending to let the application react
         //     runner_state.active = ActiveState::WillSuspend;
         // }
-        // Event::Resumed => {
-        //     #[cfg(any(target_os = "android", target_os = "ios", target_os = "macos"))]
-        //     {
-        //         if runner_state.active == ActiveState::NotYetStarted {
-        //             create_windows(event_loop, create_window.get_mut(&mut app.world));
-        //             create_window.apply(&mut app.world);
-        //         }
-        //     }
+        Event::Resumed => {
+            // #[cfg(any(target_os = "android", target_os = "ios", target_os = "macos"))]
+            // {
+            //     if runner_state.active == ActiveState::NotYetStarted {
+            //         create_windows(event_loop, create_window.get_mut(&mut app.world));
+            //         create_window.apply(&mut app.world);
+            //     }
+            // }
 
-        //     match runner_state.active {
-        //         ActiveState::NotYetStarted => app.send_event(ApplicationLifetime::Started),
-        //         _ => app.send_event(ApplicationLifetime::Resumed),
-        //     }
-        //     runner_state.active = ActiveState::Active;
-        //     runner_state.redraw_requested = true;
-        //     #[cfg(target_os = "android")]
-        //     {
-        //         // Get windows that are cached but without raw handles. Those window were already created, but got their
-        //         // handle wrapper removed when the app was suspended.
-        //         let mut query = app
-        //                 .world
-        //                 .query_filtered::<(Entity, &Window), (With<CachedWindow>, Without<bevy_window::RawHandleWrapper>)>();
-        //         if let Ok((entity, window)) = query.get_single(&app.world) {
-        //             use raw_window_handle::{HasDisplayHandle, HasWindowHandle};
-        //             let window = window.clone();
+            match runner_state.active {
+                ActiveState::NotYetStarted => app.send_event(ApplicationLifetime::Started),
+                _ => app.send_event(ApplicationLifetime::Resumed),
+            }
+            runner_state.active = ActiveState::Active;
+            runner_state.redraw_requested = true;
+            // #[cfg(target_os = "android")]
+            // {
+            //     // Get windows that are cached but without raw handles. Those window were already created, but got their
+            //     // handle wrapper removed when the app was suspended.
+            //     let mut query = app
+            //             .world
+            //             .query_filtered::<(Entity, &Window), (With<CachedWindow>, Without<bevy_window::RawHandleWrapper>)>();
+            //     if let Ok((entity, window)) = query.get_single(&app.world) {
+            //         use raw_window_handle::{HasDisplayHandle, HasWindowHandle};
+            //         let window = window.clone();
 
-        //             let (
-        //                 ..,
-        //                 mut winit_windows,
-        //                 mut adapters,
-        //                 mut handlers,
-        //                 accessibility_requested,
-        //             ) = create_window.get_mut(&mut app.world);
+            //         let (
+            //             ..,
+            //             mut winit_windows,
+            //             mut adapters,
+            //             mut handlers,
+            //             accessibility_requested,
+            //         ) = create_window.get_mut(&mut app.world);
 
-        //             let winit_window = winit_windows.create_window(
-        //                 event_loop,
-        //                 entity,
-        //                 &window,
-        //                 &mut adapters,
-        //                 &mut handlers,
-        //                 &accessibility_requested,
-        //             );
+            //         let winit_window = winit_windows.create_window(
+            //             event_loop,
+            //             entity,
+            //             &window,
+            //             &mut adapters,
+            //             &mut handlers,
+            //             &accessibility_requested,
+            //         );
 
-        //             let wrapper = RawHandleWrapper {
-        //                 window_handle: winit_window.window_handle().unwrap().as_raw(),
-        //                 display_handle: winit_window.display_handle().unwrap().as_raw(),
-        //             };
+            //         let wrapper = RawHandleWrapper {
+            //             window_handle: winit_window.window_handle().unwrap().as_raw(),
+            //             display_handle: winit_window.display_handle().unwrap().as_raw(),
+            //         };
 
-        //             app.world.entity_mut(entity).insert(wrapper);
-        //         }
-        //         event_loop.set_control_flow(ControlFlow::Wait);
-        //     }
-        // }
+            //         app.world.entity_mut(entity).insert(wrapper);
+            //     }
+            //     event_loop.set_control_flow(ControlFlow::Wait);
+            // }
+        }
         _ => (),
     }
 }
@@ -719,10 +757,11 @@ fn run_app_update_if_should(
 ) {
     log::info!("update/frame");
     runner_state.reset_on_update();
+    log::info!("{:?}", runner_state.active);
 
-    // if !runner_state.active.should_run() {
-    //     return;
-    // }
+    if !runner_state.active.should_run() {
+        return;
+    }
     if runner_state.active == ActiveState::WillSuspend {
         runner_state.active = ActiveState::Suspended;
         #[cfg(target_os = "android")]
@@ -740,6 +779,7 @@ fn run_app_update_if_should(
         // runner_state.last_update = Instant::now();
         runner_state.last_update = wasi::clocks::monotonic_clock::now();
 
+        log::info!("running update");
         app.update();
 
         // decide when to run the next update

@@ -1,7 +1,8 @@
 //! A simplified implementation of the classic game "Breakout".
 
 use bevy::{
-    log, math::bounding::{Aabb2d, BoundingCircle, BoundingVolume, IntersectsVolume}, prelude::*, sprite::MaterialMesh2dBundle
+    // log,
+    math::bounding::{Aabb2d, BoundingCircle, BoundingVolume, IntersectsVolume}, prelude::*, sprite::MaterialMesh2dBundle
 };
 
 mod stepping;
@@ -62,6 +63,14 @@ fn main2() {
         .add_systems(Startup, setup)
         // Add our gameplay simulation systems to the fixed timestep schedule
         // which runs at 64 Hz by default
+        // .add_systems(
+        //     Update,
+        //     (
+        //         move_paddle,
+        //     )
+        //         // `chain`ing systems together runs them in order
+        //         .chain(),
+        // )
         .add_systems(
             FixedUpdate,
             (
@@ -390,8 +399,6 @@ fn setup(
             ));
         }
     }
-
-    log::info!("fdsa hhhhhhhhhhhhhhhh");
 }
 
 fn move_paddle(
@@ -399,6 +406,7 @@ fn move_paddle(
     mut query: Query<&mut Transform, With<Paddle>>,
     time: Res<Time>,
 ) {
+    ::log::info!("got key input ================================== {:?}", keyboard_input);
     let mut paddle_transform = query.single_mut();
     let mut direction = 0.0;
 
@@ -423,6 +431,7 @@ fn move_paddle(
 }
 
 fn apply_velocity(mut query: Query<(&mut Transform, &Velocity)>, time: Res<Time>) {
+    ::log::info!("here ????????????????????????????????????????????????????????????????????????????????????");
     for (mut transform, velocity) in &mut query {
         transform.translation.x += velocity.x * time.delta_seconds();
         transform.translation.y += velocity.y * time.delta_seconds();
